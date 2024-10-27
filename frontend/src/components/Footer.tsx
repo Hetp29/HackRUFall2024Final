@@ -5,11 +5,11 @@ const Footer = () => {
   return (
     <motion.div
       style={{
-        backgroundColor: "white",
+        backgroundColor: "#f8f9fa", // Light gray for subtle contrast
         borderTop: "1px solid #e0e0e0",
         boxShadow: "0 -4px 6px rgba(0, 0, 0, 0.1)",
-        color: "gray.800",
-        padding: "0.5rem 0",
+        color: "#333", // Dark gray for readability on light backgrounds
+        padding: "1rem 0",
         textAlign: "center",
         width: "100%",
       }}
@@ -18,11 +18,13 @@ const Footer = () => {
       transition={{ duration: 0.6 }}
     >
       <Stack spacing={2} align="center">
-        <Text>© {new Date().getFullYear()} ClientSync. All rights reserved.</Text>
+        <Text fontSize="sm" color="gray.600">
+          © {new Date().getFullYear()} ClientSync. All rights reserved.
+        </Text>
         <Stack direction="row" spacing={4} justify="center">
           <motion.a
             href="/privacy"
-            style={{ color: "blue.500" }}
+            style={{ color: "#007bff" }} // Blue for clickable links
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -31,7 +33,7 @@ const Footer = () => {
           </motion.a>
           <motion.a
             href="/terms"
-            style={{ color: "blue.500" }}
+            style={{ color: "#007bff" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
