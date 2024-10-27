@@ -23,7 +23,7 @@ const navLinks = [
   { name: 'About', href: '/about' },
   { name: 'Features', href: 'features-section' },
   { name: 'Pricing', href: 'pricing-section' },
-  { name: 'Solutions', href: '/solutions' },
+  { name: 'Solutions', href: 'faq-section' },
 ];
 
 const DesktopSidebarContents = ({ name }: any) => {

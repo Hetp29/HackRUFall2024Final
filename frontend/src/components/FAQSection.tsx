@@ -51,6 +51,7 @@ const faqs: FAQType[] = [
 export const FAQSection = ({ items = faqs }: FAQSectionProps) => {
     return (
         <motion.div
+            id="faq-section"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}

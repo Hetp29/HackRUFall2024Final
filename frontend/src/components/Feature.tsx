@@ -74,6 +74,7 @@ const features = [
 export const FeaturesSection: FunctionComponent = () => {
   return (
     <motion.div
+      id="features-section" // This should match the href in navLinks
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
