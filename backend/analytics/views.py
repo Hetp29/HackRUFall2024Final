@@ -3,11 +3,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, PolynomialFeatures
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingRegressor, VotingClassifier, GradientBoostingClassifier
 from .models import Customer, Transaction, Product
 from textblob import TextBlob
+from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 import random
@@ -29,6 +30,43 @@ device = 0 if torch.cuda.is_available() else -1
 logger = logging.getLogger(__name__)
 sentiment_analyzer = None
 SENTIMENT_TIMEOUT = 5
+
+
+scaler = MinMaxScaler()
+poly = PolynomialFeatures(degree=2, include_bias=False)
+
+# Expanded mock data for initial model training
+mock_data = np.array([
+    [10, 8, 300, 24, 35],
+    [60, 5, 100, 12, 45],
+    [120, 3, 50, 6, 28],
+    [200, 1, 20, 3, 60],
+    [5, 10, 500, 36, 25],
+    [45, 6, 120, 18, 38],
+    [15, 7, 200, 24, 30],
+    [90, 4, 80, 14, 50],
+    [150, 2, 40, 8, 55],
+    [5, 9, 600, 40, 29],
+    [80, 4, 300, 10, 42],
+    [120, 6, 150, 15, 37],
+    [10, 10, 700, 50, 23],
+    [100, 3, 60, 5, 52],
+    [200, 2, 30, 2, 67]
+])
+mock_labels = [0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1]
+
+# Scale and transform the mock data once
+mock_data_poly = poly.fit_transform(mock_data)
+scaled_mock_data = scaler.fit_transform(mock_data_poly)
+
+# Initialize and train the ensemble model
+rf = RandomForestClassifier(n_estimators=100, max_depth=7, random_state=42)
+gb = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42)
+ensemble_model = VotingClassifier(
+    estimators=[('rf', rf), ('gb', gb)],
+    voting='soft'
+)
+ensemble_model.fit(scaled_mock_data, mock_labels)
 
 class CustomerSegmentationView(APIView):
     def get(self, request):
@@ -196,6 +234,8 @@ class LifetimeValuePredictionView(APIView):
         #use set of data representing range of customer profiles so model can generalize across customer types
         #scales features and uses to ensemble models-RandomForest and GradientBoosting-for prediction stability and accuracy
         #combines predictions from both models (both contribute equally with 50/50 blend), ensuring a balanced and reliable lifetime value prediction for each customer
+        
+
 
 
 # Example assuming a ForeignKey named 'category' from Product to Category model
@@ -308,42 +348,41 @@ class RFMAnalysisView(APIView):
         #RFM is to identify valuable customers by scoring them based on how recently, frequently, and how much they spend
 
 class ChurnPredictionView(APIView):
-    def get(self, request):
-        customers = Customer.objects.all()
-        if not customers.exists():
-            return Response({'error': 'No customers available for churn prediction'}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        last_interaction = request.data.get('last_interaction')
+        engagement_frequency = request.data.get('engagement_frequency')
+        total_spend = request.data.get('total_spend')
+        tenure = request.data.get('tenure')
+        age = request.data.get('age')
 
-        data = [
-            [customer.age, customer.total_spent, customer.recency_score, customer.frequency_score]
-            for customer in customers
-        ]
-        
-        labels = [1 if customer.total_spent < 100 else 0 for customer in customers]
-        model = RandomForestClassifier().fit(data, labels)
-        
-        for customer in customers:
-            customer.churn_risk_score = model.predict_proba([[customer.age, customer.total_spent]])[0][1]
-            customer.save()
+        if not all([last_interaction, engagement_frequency, total_spend, tenure, age]):
+            return Response(
+                {'error': 'All fields (last_interaction, engagement_frequency, total_spend, tenure, age) are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response({'message': 'Churn risk scores updated'}, status=status.HTTP_200_OK)
+        try:
+            last_interaction_date = datetime.strptime(last_interaction, '%Y-%m-%d')
+            recency_days = (datetime.now() - last_interaction_date).days
+            engagement_frequency = int(engagement_frequency)
+            total_spend = float(total_spend)
+            tenure = int(tenure)
+            age = int(age)
 
-class SalesForecastingView(APIView):
-    def get(self, request):
-        transactions = Transaction.objects.all()
-        
-        if not transactions.exists():
-            return Response({'error': 'No transactions available for forecasting'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        data = pd.DataFrame({
-            'timestamp': [t.timestamp for t in transactions],
-            'amount': [t.amount for t in transactions]
-        })
-        data.set_index('timestamp', inplace=True)
-        
-        model = ExponentialSmoothing(data['amount'], seasonal='add', seasonal_periods=12).fit()
-        forecast = model.forecast(3)
-        
-        return Response({'forecast': forecast.tolist()}, status=status.HTTP_200_OK)
+            # Create and scale the feature vector for the new input
+            features = np.array([[recency_days, engagement_frequency, total_spend, tenure, age]])
+            poly_features = poly.transform(features)  # Only transform, don't fit
+            scaled_features = scaler.transform(poly_features)  # Only transform, don't fit
+
+            # Predict churn probability using the pre-trained model
+            churn_probability = ensemble_model.predict_proba(scaled_features)[0][1]
+            return Response({'churn_probability': round(churn_probability * 100, 2)}, status=status.HTTP_200_OK)
+
+        except ValueError:
+            return Response({'error': 'Invalid input data. Please check your inputs.'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in ChurnPredictionView: {e}")
+            return Response({'error': 'An error occurred while predicting churn probability.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class PersonalizedRecommendationView(APIView):
     def get(self, request, customer_id):

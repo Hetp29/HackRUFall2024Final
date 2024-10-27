@@ -143,6 +143,8 @@ def reset_password(request):
     except Exception as e:
         logger.error(f"Error during password reset: {str(e)}")
         return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
 
 
 def Home(request):

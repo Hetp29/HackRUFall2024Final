@@ -7,7 +7,6 @@ from .views import (
     LifetimeValuePredictionView,
     PersonalizedRecommendationView,
     RFMAnalysisView,
-    SalesForecastingView,
     SentimentAnalysisView,
     ProductRecommendationView,
     AddCustomerView
@@ -20,7 +19,6 @@ urlpatterns = [
     path('recommendations/<int:customer_id>/', ProductRecommendationView.as_view(), name='recommendation_engine'),
     path('rfm-analysis/', RFMAnalysisView.as_view(), name='rfm_analysis'),
     path('churn-prediction/', ChurnPredictionView.as_view(), name='churn_prediction'),
-    path('sales-forecasting/', SalesForecastingView.as_view(), name='sales_forecasting'),
     path('personalized-recommendations/<int:customer_id>/', PersonalizedRecommendationView.as_view(), name='personalized_recommendations'),
     path('advanced-sentiment-analysis/', AdvancedSentimentAnalysisView.as_view(), name='advanced_sentiment_analysis'),
     path('add-customer/', AddCustomerView.as_view(), name='add_customer'),
