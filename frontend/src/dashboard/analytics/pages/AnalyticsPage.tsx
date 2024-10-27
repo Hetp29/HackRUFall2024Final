@@ -6,6 +6,7 @@ import LifetimeValuePrediction from '../components/LifetimeValuePrediction';
 import SentimentAnalysis from '../components/SentimentAnalysis';
 import ProductRecommendation from '../components/ProductRecommendation';
 import RFMAnalysis from '../components/RFMAnalysis';
+import ChurnPrediction from '../components/ChurnPrediction';
 
 const AnalyticsPage: React.FC = () => {
     return (
@@ -51,7 +52,7 @@ const AnalyticsPage: React.FC = () => {
                     
                     <Box bg="white" p={6} borderRadius="md" shadow="md">
                         <Text fontSize="lg" mb={4} color="black">Churn Prediction</Text>
-                        <Text color="black">Chart Component for Churn Prediction</Text>
+                        <ChurnPrediction />
                         <Button size="sm" mt={4} colorScheme="blue">Edit Report</Button>
                     </Box>
                     
